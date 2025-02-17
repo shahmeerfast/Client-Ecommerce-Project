@@ -17,29 +17,40 @@ exports.register = async (req, res) => {
 
     // Check if user exists
     const userExists = await User.findOne({ email });
+
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists'
+      });
     }
 
     // Create user
     const user = await User.create({
       fullName,
       email,
-      password,
+      password
     });
 
     if (user) {
+      const token = generateToken(user._id);
       res.status(201).json({
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
+        success: true,
+        data: {
+          _id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          token
+        }
       });
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Register error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error registering user'
+    });
   }
 };
 
@@ -50,41 +61,30 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email and password
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide email and password'
-      });
-    }
-
-    // Check for user
+    // Find user by email and include password
     const user = await User.findOne({ email }).select('+password');
-    
+
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid credentials'
       });
     }
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
-    
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid credentials'
       });
     }
 
-    // Create token
-    const token = user.getSignedJwtToken();
+    // Generate token
+    const token = generateToken(user._id);
 
-    // Remove password from output
-    user.password = undefined;
-
-    res.status(200).json({
+    res.json({
       success: true,
       data: {
         _id: user._id,
@@ -94,12 +94,43 @@ exports.login = async (req, res) => {
         token
       }
     });
-
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({
       success: false,
-      message: 'An error occurred during login'
+      message: 'Error logging in'
+    });
+  }
+};
+
+// @desc    Get current user
+// @route   GET /api/auth/me
+// @access  Private
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting user data'
     });
   }
 };

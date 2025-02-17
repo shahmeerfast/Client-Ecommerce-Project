@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user',
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 }, {
   timestamps: true,
 });
@@ -51,12 +55,7 @@ userSchema.methods.getSignedJwtToken = function() {
 
 // Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function(enteredPassword) {
-  try {
-    return await bcrypt.compare(enteredPassword, this.password);
-  } catch (error) {
-    console.error('Password comparison error:', error);
-    return false;
-  }
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 module.exports = mongoose.model('User', userSchema);
