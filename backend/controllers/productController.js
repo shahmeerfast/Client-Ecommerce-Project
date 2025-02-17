@@ -196,9 +196,8 @@ exports.getProduct = async (req, res) => {
   }
 };
 
-// @desc    Get all products for user
+// @desc    Get all products
 // @route   GET /api/products
-// @access  Private
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find({ user: req.user._id });
