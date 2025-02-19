@@ -5,6 +5,8 @@ const dotenv = require('dotenv');
 const routes = require('./routes');
 const fs = require('fs');
 const path = require('path');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
 
 // Load env vars
 dotenv.config();
@@ -27,22 +29,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error('MongoDB connection error:', error.message);
-    process.exit(1);
-  }
-};
-
-// Connect to MongoDB
+// Connect to database
 connectDB();
 
 // Routes
 app.use('/api', routes);
+app.use('/api/auth', authRoutes);
 
 // Add these lines after your middleware setup
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
