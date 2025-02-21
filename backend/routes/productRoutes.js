@@ -1,28 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 const {
+  getProducts,
+  getProduct,
   createProduct,
-  getUserProducts,
-  getProductById,
   updateProduct,
   deleteProduct
 } = require('../controllers/productController');
-const upload = require('../middleware/upload');
-
-// Protect all routes
-router.use(protect);
 
 // Routes
 router.route('/')
-  .post(upload.single('image'), createProduct);
-
-router.route('/user')
-  .get(getUserProducts);
+  .get(protect, getProducts)
+  .post(protect, upload.single('image'), createProduct);
 
 router.route('/:id')
-  .get(getProductById)
-  .put(upload.single('image'), updateProduct)
-  .delete(deleteProduct);
+  .get(protect, getProduct)
+  .put(protect, upload.single('image'), updateProduct)
+  .delete(protect, deleteProduct);
 
 module.exports = router; 
